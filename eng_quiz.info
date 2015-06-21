@@ -1,0 +1,7 @@
+name = English Quiz V1
+description = English Quiz V1.0
+core = 7.x
+package = Test Modules
+
+files[] = eng_quiz.module
+files[] = eng_quiz.install

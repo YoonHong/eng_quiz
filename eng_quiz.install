@@ -1,0 +1,282 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function eng_quiz_install() {
+
+}
+
+/**
+ * Implements hook_schema().
+ */
+function eng_quiz_schema() {
+	$schema['eng_quiz_main'] = array(
+    'description' => 'The base table for eng_quiz_main.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for quiz.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The type of this quiz.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+
+      'title' => array(
+        'description' => 'The title of this quiz.',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the artwork was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the artwork was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+
+    ),
+    'unique keys' => array(
+      'id'     => array('id')
+      ),
+    'primary key' => array('id'),
+  );
+
+  $schema['eng_quiz_sub'] = array(
+    'description' => 'The base table for eng_quiz_sub.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for question.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+
+      'mid' => array(
+        'description' => 'The foreign identifier for question.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+
+
+      'type' => array(
+        'description' => 'The type of this question.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+
+      'title' => array(
+        'description' => 'The title of this question.',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+
+			'answer' => array(
+        'description' => 'The correct answer of this question.',
+        'type' => 'varchar',
+        'length' => 300,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+
+			'opt_cnt' => array(
+        'description' => 'The Count of Options.',
+				'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+
+    ),
+
+    'unique keys' => array(
+      'id'     => array('id')
+      ),
+
+    'primary key' => array('id'),
+
+    'foreign keys' => array(
+      'fk_id' => array(
+        'table' => 'eng_quiz_main',
+        'columns' => array('mid' => 'id'),
+      ),
+    ),
+
+  );
+
+	$schema['eng_quiz_sub_opt'] = array(
+    'description' => 'Multiple Choices',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for choice.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+
+      'sid' => array(
+        'description' => 'The foreign identifier for question.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+
+			'seq' => array(
+        'description' => 'The sequence for choice.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+
+
+      'title' => array(
+        'description' => 'The title of this choice.',
+        'type' => 'varchar',
+        'length' => 300,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+
+    ),
+
+    'unique keys' => array(
+      'id'     => array('id')
+      ),
+
+    'primary key' => array('id'),
+
+    'foreign keys' => array(
+      'fk_id' => array(
+        'table' => 'eng_quiz_sub',
+        'columns' => array('sid' => 'id'),
+      ),
+    ),
+
+  );
+
+	$schema['eng_quiz_student_qlist'] = array(
+		'description' => 'Student Quiz List',
+		'fields' => array(
+			'id' => array(
+				'description' => 'The primary identifier.',
+				'type' => 'serial',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+			),
+
+			'uid' => array(
+				'description' => 'The foreign identifier for user.',
+				'type' => 'int',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+			),
+
+			'mid' => array(
+				'description' => 'The foreign identifier for question.',
+				'type' => 'int',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+			),
+
+			'cnt' => array(
+				'description' => 'The count for correct answers.',
+				'type' => 'int',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+			),
+/*
+			'created' => array(
+				'mysql_type' => 'datetime',
+				'not null ' => TRUE,
+				'default' => format_date(time(), 'custom', 'Y-m-d G:i:s'),
+			),
+*/
+		),
+
+		'unique keys' => array(
+			'id'     => array('id')
+			),
+
+		'primary key' => array('id'),
+
+		'foreign keys' => array(
+			'fk_mid' => array(
+				'table' => 'eng_quiz_main',
+				'columns' => array('mid' => 'id'),
+			),
+
+			'fk_uid' => array(
+				'table' => 'users',
+				'columns' => array('uid' => 'uid'),
+			),
+
+		),
+
+	);
+
+	$schema['eng_quiz_student_qlist_dtl'] = array(
+		'description' => 'Student Quiz List Detail : Answers',
+		'fields' => array(
+			'sqid' => array(
+					'type' => 'int',
+					'unsigned' => TRUE,
+					'not null' => TRUE,
+			),
+
+			'sid' => array(
+					'type' => 'int',
+					'unsigned' => TRUE,
+					'not null' => TRUE,
+			),
+
+			'answer' => array(
+        'description' => 'The answer for this question.',
+        'type' => 'varchar',
+        'length' => 300,
+        'not null' => FALSE,
+        'default' => '',
+      ),
+
+		),
+
+		'indexes' => array(
+        'sqid' => array('sqid'),
+    ),
+
+		'primary key' => array('sqid', 'sid',),
+
+		'foreign keys' => array(
+			'fk_sid' => array(
+				'table' => 'eng_quiz_sub',
+				'columns' => array('sid' => 'id'),
+			),
+			'fk_sqid' => array(
+				'table' => 'eng_quiz_student_qlist',
+				'columns' => array('sqid' => 'id'),
+			),
+
+		),
+
+	);
+
+	return $schema;
+
+}

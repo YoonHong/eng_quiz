@@ -1,0 +1,247 @@
+<?php
+
+/**
+ * @file
+ * A module for English Quiz.
+ */
+
+/**
+ * Implement hook_help().
+ */
+function eng_quiz_help($path, $arg) {
+	if ($path == 'admin/help#eng_quiz') {
+		return t('English Quiz. Nothing Important???');
+	}
+}
+
+
+/**
+ * Implements hook_entity_info().
+ */
+function eng_quiz_entity_info() {
+
+  $info['eng_quiz_main'] = array(
+    'label' => t('English Quiz'),
+    'base table' => 'eng_quiz_main',
+    'entity class' => 'Entity',
+    'controller class' => 'EntityAPIController',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'title',
+    ),
+  );
+
+  $info['eng_quiz_sub'] = array(
+    'label' => t('Questions'),
+    'base table' => 'eng_quiz_sub',
+    'entity class' => 'Entity',
+    'controller class' => 'EntityAPIController',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'title',
+    ),
+  );
+
+	$info['eng_quiz_sub_opt'] = array(
+    'label' => t('Options'),
+    'base table' => 'eng_quiz_sub_opt',
+    'entity class' => 'Entity',
+    'controller class' => 'EntityAPIController',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'title',
+    ),
+  );
+
+	$info['eng_quiz_student_qlist'] = array(
+    'label' => t('Student Quiz Info'),
+    'base table' => 'eng_quiz_student_qlist',
+    'entity class' => 'Entity',
+    'controller class' => 'EntityAPIController',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'id',
+    ),
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function eng_quiz_permission() {
+  return array(
+    'administer Eng Quiz' =>  array(
+      'title' => t('Administer eng_quiz'),
+			'description' => t('Manage Eng Quiz.'),
+    ),
+    'create Eng Quiz' =>  array(
+      'title' => t('Create Eng Quiz.'),
+    ),
+		'student Eng Quiz' =>  array(
+      'title' => t('Student Eng Quiz.'),
+    ),
+
+  );
+}
+
+/**
+ * Implements hook_menu().
+ *
+ */
+
+function eng_quiz_menu() {
+
+	$items = array();
+
+	$items['eng_quiz/main'] = array(
+		'title' => 'Quiz Main',
+		'page callback' => '_eng_quiz_pc_main_list',
+		'access arguments' => array('administer Eng Quiz'),
+		'description' => 'Description Test Main',
+		'file' => 'includes/eng_quiz_main.inc',
+		'type' => MENU_NORMAL_ITEM,
+	);
+
+	$items['eng_quiz/main/list'] = array(
+    'title' => 'List',
+    'page callback' => '_eng_quiz_pc_main_list',
+    'access arguments' => array('administer Eng Quiz'),
+		'description' => 'Description List',
+		'file' => 'includes/eng_quiz_main.inc',
+		'type' => MENU_DEFAULT_LOCAL_TASK,
+		'weight' => 10,
+  );
+
+	$items['eng_quiz/main/add'] = array(
+    'title' => 'Add',
+    'page callback' => '_eng_quiz_pc_main_add',
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_main.inc',
+    'type' => MENU_LOCAL_TASK,
+		'weight' => 20,
+  );
+
+	$items['eng_quiz/main/%/del'] = array(
+    'title' => 'Quiz Main List',
+    'page callback' => '_eng_quiz_pc_main_del',
+    'page arguments' => array(2),
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_main.inc',
+		'type' => MENU_CALLBACK,
+  );
+
+  $items['eng_quiz/main/%/edit'] = array(
+		'title' => 'Edit',
+		'page callback' => '_eng_quiz_pc_main_edit',
+		'page arguments' => array(2),
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_main.inc',
+		'type' => MENU_CALLBACK,
+	);
+
+	$items['eng_quiz/sub/%'] = array(
+		'title' => 'Question List',
+		'page callback' => '_eng_quiz_pc_sub_list',
+		'page arguments' => array(2),
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_sub.inc',
+	);
+
+	$items['eng_quiz/sub/%/edit/%'] = array(
+		'title' => 'Question List',
+		'page callback' => '_eng_quiz_pc_sub_edit',
+		'page arguments' => array( 2, 4 ),
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_sub.inc',
+	//	'type' => MENU_LOCAL_TASK,
+	);
+
+	$items['eng_quiz/sub/%/del/%'] = array(
+		'title' => 'Question List',
+		'page callback' => '_eng_quiz_pc_sub_del',
+		'page arguments' => array( 2, 4 ),
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_sub.inc',
+		'type' => MENU_CALLBACK,
+	);
+
+	$items['eng_quiz/student/quiz'] = array(
+		'title' => 'Student',
+		'page callback' => '_eng_quiz_pc_student_quiz',
+		'description' => 'Description Test Main',
+		'access arguments' => array('student Eng Quiz'),
+		'file' => 'includes/eng_quiz_student.inc',
+		'type' => MENU_NORMAL_ITEM,
+	);
+
+	$items['eng_quiz/student/quiz/list'] = array(
+		'title' => 'List',
+		'page callback' => '_eng_quiz_pc_student_quiz',
+		'description' => 'Description List',
+		'access arguments' => array('student Eng Quiz'),
+		'file' => 'includes/eng_quiz_student.inc',
+		'type' => MENU_DEFAULT_LOCAL_TASK,
+		'weight' => 10,
+	);
+
+	$items['eng_quiz/student/quiz/history'] = array(
+		'title' => 'History',
+		'page callback' => '_eng_quiz_pc_student_quiz_history',
+		'description' => 'Quiz History',
+		'access arguments' => array('student Eng Quiz'),
+		'file' => 'includes/eng_quiz_student.inc',
+		'type' => MENU_LOCAL_TASK,
+		'weight' => 20,
+	);
+
+	$items['eng_quiz/student/%/qprocess'] = array(
+		'title' => 'Quiz',
+		'page callback' => '_eng_quiz_pc_student_qprocess',
+		'page arguments' => array(2),
+		'access arguments' => array('student Eng Quiz'),
+		'file' => 'includes/eng_quiz_student.inc',
+		'type' => MENU_NORMAL_ITEM,
+	);
+
+  return $items;
+}
+
+function _eng_quiz_get_single_entity($eName, $id) {
+
+  $list = entity_load($eName, array($id));
+  $entity = $list[$id];
+
+  return $entity;
+}
+
+function _eng_quiz_get_sub_list ( $mid ) {
+  $list = array();
+
+  $result = db_query(
+      "SELECT * FROM {eng_quiz_sub} WHERE mid =
+   :mid ORDER BY id ASC", array(':mid' => $mid,)
+   );
+
+  $records = $result->fetchAll();
+
+  return $records;
+}
+
+function _eng_quiz_get_opt_list ( $sid ) {
+  $query = new EntityFieldQuery();
+  $result = $query
+    ->entityCondition('entity_type', 'eng_quiz_sub_opt')
+    ->propertyCondition('sid', $sid, '=')
+    ->propertyOrderBy('seq', 'ASC')
+    ->execute();
+
+  $tids = array();
+  foreach($result['eng_quiz_sub_opt'] as $term) {
+      $tids[] = $term->id;
+  }
+  $opts = entity_load('eng_quiz_sub_opt', $tids);
+
+  return $opts;
+}
