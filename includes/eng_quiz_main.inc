@@ -14,10 +14,18 @@ function _eng_quiz_pc_main_list() {
 function _eng_quiz_pc_main_list_table(){
   $content = array();
 
-  // Load all of our entities.
-  $entities = entity_load('eng_quiz_main');
-  if (!empty($entities)) {
-    foreach ($entities as $entity) {
+
+  $query = db_select('eng_quiz_main', 'd')->extend('PagerDefault');
+  $query->fields('d', array('id', 'type', 'title', 'created'));
+
+  // Change the number of rows with the limit() call.
+  $result = $query
+    ->limit(20)
+    ->orderBy('d.id')
+    ->execute();
+
+    $rows = array();
+    foreach ($result as $entity) {
       // Create tabular rows for our entities.
       $rows[] = array(
         'data' => array(
@@ -29,25 +37,22 @@ function _eng_quiz_pc_main_list_table(){
         'del' => l(t('del'), 'eng_quiz/main/'.$entity->id.'/del'),
         ),
       );
+
     }
+
     // Put our entities into a themed table. See theme_table() for details.
     $content['entity_table'] = array(
       '#theme' => 'table',
       '#rows' => $rows,
       '#header' => array(t('ID'), t('Title'), t('Type'), t('Created Date'), t('Edit'), t('Del') ),
+      '#empty' => t('No Quiz!!!'),
     );
-  }
-  else {
-    // There were no entities. Tell the user.
-    $content[] = array(
-      '#type' => 'item',
-      '#markup' => t('No Quiz.'),
-    );
-  }
+
+// Attach the pager theme.
+$content['entity_pager'] = array('#theme' => 'pager');
 
   return $content;
 }
-
 
 function _eng_quiz_pc_main_add() {
   $entity = entity_create('eng_quiz_main', array('id' => null));
@@ -144,8 +149,6 @@ function _eng_quiz_main_del_form($form, &$form_state, $entity) {
 
 function _eng_quiz_main_del_form_submit($form, &$form_state) {
   $org_entity = $form_state['values']['basic_entity'];
-
-  dpm($org_entity);
 
   db_delete('eng_quiz_main')
     ->condition('id', $org_entity->id)
