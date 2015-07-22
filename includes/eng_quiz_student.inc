@@ -46,8 +46,8 @@ function _eng_quiz_view_sq_history() {
       // Create tabular rows for our entities.
       $rows[] = array(
         'data' => array(
-          'id' => $entity->id,
-        'title' => l($entity->mid, 'eng_quiz/student/'.$entity->id.'/qprocess'),
+          'id' => $entity->mid,
+        'title' => l($entity->id, 'eng_quiz/student/'.$entity->id.'/qprocess'),
           'cnt' => ''.$entity->cnt.' / '.$total_cnt,
         ),
       );
@@ -74,14 +74,20 @@ function _eng_quiz_view_sq_history() {
 
 function _eng_quiz_view_sq_list() {
   $content = array();
+  $user = $GLOBALS['user'];
+  $uid = $user->uid;
 
-  // Load all of our entities.
-  $result = db_query(
-      'SELECT A.id, A.title, A.type
-        FROM {eng_quiz_main} A
-        WHERE 1=1
-          AND A.id NOT IN ( SELECT mid FROM {eng_quiz_student_qlist} )'
-      );
+  $query = db_select('eng_quiz_main', 'mq')->extend('PagerDefault');
+
+  $query->leftJoin('eng_quiz_student_qlist', 'sq', 'mq.id = sq.mid AND sq.uid = '.$uid);
+
+  $query->fields('mq',array('id', 'title', 'type'))
+        ->fields('sq',array('mid', 'uid'))
+        ->isNull('sq.mid');
+
+  $result = $query->limit(20)
+                ->orderBy('mq.id')
+                ->execute();
 
   if ($result->rowCount() > 0 ) {
 
@@ -101,6 +107,10 @@ function _eng_quiz_view_sq_list() {
       '#rows' => $rows,
       '#header' => array(t('ID'), t('Title'), t('Type'),),
     );
+
+    // Attach the pager theme.
+    $content['entity_pager'] = array('#theme' => 'pager');
+
   }
   else {
     // There were no entities. Tell the user.
@@ -109,6 +119,7 @@ function _eng_quiz_view_sq_list() {
       '#markup' => t('No Quiz!!!'),
     );
   }
+
 
   return $content;
 }

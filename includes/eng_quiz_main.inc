@@ -24,6 +24,7 @@ function _eng_quiz_pc_main_list_table(){
     ->orderBy('d.id')
     ->execute();
 
+  if ($result->rowCount() > 0 ) {
     $rows = array();
     foreach ($result as $entity) {
       // Create tabular rows for our entities.
@@ -48,8 +49,15 @@ function _eng_quiz_pc_main_list_table(){
       '#empty' => t('No Quiz!!!'),
     );
 
-// Attach the pager theme.
-$content['entity_pager'] = array('#theme' => 'pager');
+    // Attach the pager theme.
+    $content['entity_pager'] = array('#theme' => 'pager');
+
+  } else {
+    $content[] = array(
+      '#type' => 'item',
+      '#markup' => t('No Quiz!!!'),
+    );
+  }
 
   return $content;
 }
