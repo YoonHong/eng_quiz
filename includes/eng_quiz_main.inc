@@ -21,7 +21,7 @@ function _eng_quiz_pc_main_list_table(){
   // Change the number of rows with the limit() call.
   $result = $query
     ->limit(20)
-    ->orderBy('d.id')
+    ->orderBy('d.id', 'DESC')
     ->execute();
 
   if ($result->rowCount() > 0 ) {
