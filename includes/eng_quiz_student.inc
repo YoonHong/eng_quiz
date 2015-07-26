@@ -13,7 +13,7 @@ function _eng_quiz_pc_student_qprocess( $mid ) {
 }
 
 function _eng_quiz_pc_student_quiz_history() {
-  $content['preface']['#markup'] = t('Quiz History!!!'.$GLOBALS['user']->name);
+  $content['preface']['#markup'] = t('Quiz History For @name!!!', array('@name' => $GLOBALS['user']->name) );
 
   $content['table'] = _eng_quiz_view_sq_history();
 
@@ -81,12 +81,12 @@ function _eng_quiz_view_sq_list() {
 
   $query->leftJoin('eng_quiz_student_qlist', 'sq', 'mq.id = sq.mid AND sq.uid = '.$uid);
 
-  $query->fields('mq',array('id', 'title', 'type'))
+  $query->fields('mq',array('id', 'title', 'type', 'created'))
         ->fields('sq',array('mid', 'uid'))
         ->isNull('sq.mid');
 
   $result = $query->limit(20)
-                ->orderBy('mq.id')
+                ->orderBy('mq.id', 'DESC')
                 ->execute();
 
   if ($result->rowCount() > 0 ) {
@@ -95,9 +95,10 @@ function _eng_quiz_view_sq_list() {
       // Create tabular rows for our entities.
       $rows[] = array(
         'data' => array(
-          'id' => $entity->id,
+        'id' => $entity->id,
         'title' => l($entity->title, 'eng_quiz/student/'.$entity->id.'/qprocess'),
-          'type' => $entity->type,
+        'type' => $entity->type,
+        'created' => format_date( $entity->created, 'custom', 'Y-M-d' ),
         ),
       );
     }
@@ -105,7 +106,7 @@ function _eng_quiz_view_sq_list() {
     $content['entity_table'] = array(
       '#theme' => 'table',
       '#rows' => $rows,
-      '#header' => array(t('ID'), t('Title'), t('Type'),),
+      '#header' => array(t('ID'), t('Title'), t('Type'), t('Created Date'),),
     );
 
     // Attach the pager theme.
@@ -181,6 +182,8 @@ function _eng_quiz_student_qprocess_form($form, &$form_state, $mid) {
     '#value' => t('Submit!'),
   //  '#weight' => 50,
   );
+
+  $form['link_cancel'] = array('#markup' => l(t('Cancel'), 'eng_quiz/student/quiz'));
 
   return $form;
 

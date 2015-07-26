@@ -36,13 +36,13 @@ function eng_quiz_schema() {
         'default' => '',
       ),
       'created' => array(
-        'description' => 'The Unix timestamp when the artwork was created.',
+        'description' => 'The Unix timestamp when the Quiz was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
       'changed' => array(
-        'description' => 'The Unix timestamp when the artwork was most recently saved.',
+        'description' => 'The Unix timestamp when the Quiz was most recently saved.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -202,13 +202,14 @@ function eng_quiz_schema() {
 				'unsigned' => TRUE,
 				'not null' => TRUE,
 			),
-/*
+
 			'created' => array(
-				'mysql_type' => 'datetime',
-				'not null ' => TRUE,
-				'default' => format_date(time(), 'custom', 'Y-m-d G:i:s'),
+				'description' => 'Time when student solved a quiz!',
+				'type' => 'int',
+				'not null' => TRUE,
+				'default' => 0,
 			),
-*/
+
 		),
 
 		'unique keys' => array(
