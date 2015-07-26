@@ -20,17 +20,101 @@ function _eng_quiz_pc_student_quiz_history() {
   return $content;
 }
 
+function _eng_quiz_pc_student_qanswer( $sqid, $uid ) {
+
+  $sq_entity = _eng_quiz_get_single_entity( 'eng_quiz_student_qlist' , $sqid );
+
+  $mid = $sq_entity->mid;
+
+  $qmain = _eng_quiz_get_single_entity( 'eng_quiz_main' , $mid );
+
+  $testDate = format_date( $sq_entity->created, 'custom', 'Y-M-d' );
+
+  $content['quiz_info'] = array(
+      '#markup' => t('Tite: @title <br/>Test Date : @td',
+                    array('@title'=>$qmain->title,
+                          '@td'=>$testDate, ) ),
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+    );
+
+    // Quiz List
+    $slist = _eng_quiz_get_sub_list( $mid );
+
+    // Student Answer List
+    $sAList = _eng_quiz_get_student_qlist( $sqid );
+
+    $idx = 0;
+    foreach ($slist as $sub) {
+      $idx++;
+
+      $content['question'.$idx] = array(
+        '#markup' => t('Q@idx : @title',
+                      array('@idx'=>$idx,
+                            '@title'=>$sub->title, ) ),
+        '#prefix' => '<div style="padding-top:10px;">',
+        '#suffix' => '</div>',
+      );
+
+      if( $sub->type == 3 ) {
+        // 객관식 문항
+        $active = _eng_quiz_get_opt_questions( $sub->id );
+
+        $content['opt'.$idx] = array(
+          '#theme' => 'item_list',
+          '#items' => $active,
+          '#type' => 'ol',
+        );
+
+      }
+
+      $content['answer'.$idx] = array(
+        '#markup' => t('A@idx : @answer',
+                      array('@idx'=>$idx,
+                            '@answer'=>$sub->answer, )
+                      ),
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+      );
+
+
+      $content['user_answer'.$idx] = array(
+        '#markup' => t('Your Answer : @answer',
+                      array( '@answer'=>$sAList[$idx-1]->answer, )
+                      ),
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+      );
+
+    }
+
+    $content['link_back'] = array(
+      '#markup' => t('!link',
+                    array( '!link' => l(t('back'), 'eng_quiz/student/quiz/history'), )
+                    ),
+      '#prefix' => '<div style="margin-top:20px;">',
+      '#suffix' => '</div>',
+    );
+
+
+  return $content;
+}
+
 function _eng_quiz_view_sq_history() {
   $content = array();
 
   $user = $GLOBALS['user'];
+  $uid = $user->uid;
 
-  // Load all of our entities.
-  $result = db_query(
-      'SELECT A.id, A.mid, A.cnt
-        FROM {eng_quiz_student_qlist} A
-        WHERE 1=1
-        AND A.uid = :uid', array(':uid' => $user->uid));
+  $query = db_select('eng_quiz_student_qlist', 'sq')->extend('PagerDefault');
+  $query->join('eng_quiz_main', 'mq', 'mq.id = sq.mid');
+  $query->condition('sq.uid', $uid, '=');
+  $query->fields('mq',array('title', 'type'))
+        ->fields('sq',array('id', 'mid', 'uid', 'cnt', 'created'));
+  $query->limit(20)
+        ->orderBy('sq.created', 'DESC');
+
+  $result = $query->execute();
 
   if ($result->rowCount() > 0 ) {
 
@@ -47,8 +131,9 @@ function _eng_quiz_view_sq_history() {
       $rows[] = array(
         'data' => array(
           'id' => $entity->mid,
-        'title' => l($entity->id, 'eng_quiz/student/'.$entity->id.'/qprocess'),
+          'title' => l($entity->title, 'eng_quiz/student/'.$entity->id.'/qanswer/'.$uid),
           'cnt' => ''.$entity->cnt.' / '.$total_cnt,
+          'created' => format_date( $entity->created, 'custom', 'Y-M-d' ),
         ),
       );
     }
@@ -56,8 +141,11 @@ function _eng_quiz_view_sq_history() {
     $content['entity_table'] = array(
       '#theme' => 'table',
       '#rows' => $rows,
-      '#header' => array(t('ID'), t('Title'), t('Cnt'),),
+      '#header' => array(t('ID'), t('Title'), t('Cnt'), t('Test Date')),
     );
+
+    // Attach the pager theme.
+    $content['entity_pager'] = array('#theme' => 'pager');
   }
   else {
     // There were no entities. Tell the user.

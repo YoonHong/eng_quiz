@@ -205,6 +205,15 @@ function eng_quiz_menu() {
 		'type' => MENU_NORMAL_ITEM,
 	);
 
+	$items['eng_quiz/student/%/qanswer/%'] = array(
+		'title' => 'Quiz Answer',
+		'page callback' => '_eng_quiz_pc_student_qanswer',
+		'page arguments' => array(2, 4),
+		'access arguments' => array('student Eng Quiz'),
+		'file' => 'includes/eng_quiz_student.inc',
+		'type' => MENU_NORMAL_ITEM,
+	);
+
   return $items;
 }
 
@@ -222,6 +231,19 @@ function _eng_quiz_get_sub_list ( $mid ) {
   $result = db_query(
       "SELECT * FROM {eng_quiz_sub} WHERE mid =
    :mid ORDER BY id ASC", array(':mid' => $mid,)
+   );
+
+  $records = $result->fetchAll();
+
+  return $records;
+}
+
+function _eng_quiz_get_student_qlist ( $sqid ) {
+  $list = array();
+
+  $result = db_query(
+      "SELECT * FROM {eng_quiz_student_qlist_dtl} WHERE sqid =
+   :sqid ORDER BY sid ASC", array(':sqid' => $sqid,)
    );
 
   $records = $result->fetchAll();
