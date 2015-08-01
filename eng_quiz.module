@@ -214,6 +214,16 @@ function eng_quiz_menu() {
 		'type' => MENU_NORMAL_ITEM,
 	);
 
+	$items['eng_quiz/admin/quiz'] = array(
+		'title' => 'Admin Student Quiz',
+		'page callback' => '_eng_quiz_pc_admin_quiz_list',
+		'description' => "Admin Student's Quiz",
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_admin.inc',
+		'type' => MENU_NORMAL_ITEM,
+		'weight' => 10,
+	);
+
   return $items;
 }
 

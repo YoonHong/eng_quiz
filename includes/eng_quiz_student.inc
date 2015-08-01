@@ -89,9 +89,7 @@ function _eng_quiz_pc_student_qanswer( $sqid, $uid ) {
     }
 
     $content['link_back'] = array(
-      '#markup' => t('!link',
-                    array( '!link' => l(t('back'), 'eng_quiz/student/quiz/history'), )
-                    ),
+      '#markup' => t( '<a href="javascript:window.history.go(-1);">back</a>' ),
       '#prefix' => '<div style="margin-top:20px;">',
       '#suffix' => '</div>',
     );
