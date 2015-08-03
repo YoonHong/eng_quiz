@@ -71,12 +71,16 @@ function _eng_quiz_sub_list_form($form, &$form_state, $qmain = null, $qsub = nul
       $eType = '객관식';
     }
 
+
+    $txt_qtitle = mb_strcut( $entity->title, 0, 130,'utf-8');
+
     $rows[] = array(
       'data' => array(
       //  'id' => $entity->id,
       //  'item_description' => l($entity->title, 'test_quiz/test/' . $entity->id),
-      'title' => t('@title', array('@title'=>$entity->title)),
-        'type' => $eType,
+      'title' => t('@title', array( '@title'=>$txt_qtitle ) ),
+    //  'title' => $txt_qtitle ,
+        'type' => t( '@type', array( '@type'=>$eType, ) ),
         'edit_del' =>
 
           t('!E / !D',
@@ -136,7 +140,9 @@ function _eng_quiz_sub_list_form($form, &$form_state, $qmain = null, $qsub = nul
       // Empty
 
       $form['questions_fieldset']['question'] = array(
-        '#type' => 'textfield',
+      //  '#type' => 'textfield',
+      '#type' => 'textarea',
+
         '#title' => t('Question :'),
         '#default_value' => isset($qsub->title) ? $qsub->title : '',
         '#required' => TRUE,

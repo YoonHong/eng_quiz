@@ -238,7 +238,9 @@ function _eng_quiz_student_qprocess_form($form, &$form_state, $mid) {
 
     $form['subList'.$idx] = array(
       '#type' => 'markup',
-      '#markup' => '<div>Q '.$idx.' : '.$sub->title.'</div>',
+      '#markup' => t( 'Q @qNum : <pre>@qTitle</pre>', array( '@qNum' => $idx, '@qTitle' => $sub->title, ) ),
+      '#prefix' => '<div style="padding-top:10px;">',
+      '#suffix' => '</div>',
     );
 
     if ( $sub->type == 2) {
@@ -269,7 +271,9 @@ function _eng_quiz_student_qprocess_form($form, &$form_state, $mid) {
   //  '#weight' => 50,
   );
 
-  $form['link_cancel'] = array('#markup' => l(t('Cancel'), 'eng_quiz/student/quiz'));
+  $form['link_cancel'] = array(
+    '#markup' => t( '<a href="javascript:window.history.go(-1);">back</a>' ),
+  );
 
   return $form;
 

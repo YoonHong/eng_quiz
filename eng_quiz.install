@@ -84,7 +84,7 @@ function eng_quiz_schema() {
       'title' => array(
         'description' => 'The title of this question.',
         'type' => 'varchar',
-        'length' => 100,
+        'length' => 3000,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -92,7 +92,7 @@ function eng_quiz_schema() {
 			'answer' => array(
         'description' => 'The correct answer of this question.',
         'type' => 'varchar',
-        'length' => 300,
+        'length' => 1000,
         'not null' => TRUE,
         'default' => '',
       ),
