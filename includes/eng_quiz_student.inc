@@ -41,12 +41,24 @@ function _eng_quiz_pc_student_qanswer( $sqid, $uid ) {
     // Quiz List
     $slist = _eng_quiz_get_sub_list( $mid );
 
+
     // Student Answer List
     $sAList = _eng_quiz_get_student_qlist( $sqid );
 
     $idx = 0;
     foreach ($slist as $sub) {
       $idx++;
+
+      // Answer List
+      $aList = _eng_quiz_get_answer_list( $sub->id );
+      $txtAns = "";
+      foreach ($aList as $ans) {
+        if ( $txtAns ) {
+          $txtAns .= " , ";
+        }
+
+        $txtAns .= $ans->answer;
+      }
 
       $content['question'.$idx] = array(
         '#markup' => t('Q@idx : @title',
@@ -71,7 +83,7 @@ function _eng_quiz_pc_student_qanswer( $sqid, $uid ) {
       $content['answer'.$idx] = array(
         '#markup' => t('A@idx : @answer',
                       array('@idx'=>$idx,
-                            '@answer'=>$sub->answer, )
+                            '@answer'=>$txtAns, )
                       ),
         '#prefix' => '<div>',
         '#suffix' => '</div>',
@@ -319,8 +331,8 @@ function _eng_quiz_student_qprocess_form_submit($form, &$form_state) {
     );
     drupal_write_record('eng_quiz_student_qlist_dtl', $data);
 
-    if( $sub->answer == $form_state['values']['A'.$idx] ) {
 
+    if ( _eng_quiz_student_check_answer( $sub->id, $form_state['values']['A'.$idx] ) ) {
       $cnt++;
     }
 
@@ -331,4 +343,21 @@ function _eng_quiz_student_qprocess_form_submit($form, &$form_state) {
   drupal_write_record('eng_quiz_student_qlist', $entity, 'id');
 
   return $form_state['redirect'] = 'eng_quiz/student/quiz/history';
+}
+
+function _eng_quiz_student_check_answer( $sid, $sAns ){
+  $rv = false;
+
+  $aList = _eng_quiz_get_answer_list( $sid );
+
+  $len = sizeof( $aList );
+  for( $i = 0; $i < $len; $i++ ) {
+    $a = $aList[ $i ]->answer;
+    if( $a == $sAns ) {
+      $rv = true;
+      break;
+    }
+  }
+
+  return $rv;
 }

@@ -20,9 +20,11 @@ function _eng_quiz_pc_sub_del($mid, $sid) {
 		->condition('id', $sid)
 		->execute();
 
-    db_delete('eng_quiz_sub_opt')
-  		->condition('sid', $sid)
-  		->execute();
+  db_delete('eng_quiz_sub_opt')
+		->condition('sid', $sid)
+		->execute();
+
+  _eng_quiz_sub_answer_delete( $sid );
 
 	return _eng_quiz_pc_sub_list($mid);
 
@@ -38,7 +40,10 @@ function _eng_quiz_sub_list_form($form, &$form_state, $qmain = null, $qsub = nul
     $isUpdate = true;
     $formNoDisp = true;
 
+    $anwserList = _eng_quiz_get_answer_list( $qsub->id );
+
   }
+
 
   $form['v_main_quiz'] = array(
     '#type' => 'value',
@@ -140,8 +145,7 @@ function _eng_quiz_sub_list_form($form, &$form_state, $qmain = null, $qsub = nul
       // Empty
 
       $form['questions_fieldset']['question'] = array(
-      //  '#type' => 'textfield',
-      '#type' => 'textarea',
+        '#type' => 'textarea',
 
         '#title' => t('Question :'),
         '#default_value' => isset($qsub->title) ? $qsub->title : '',
@@ -149,17 +153,44 @@ function _eng_quiz_sub_list_form($form, &$form_state, $qmain = null, $qsub = nul
       );
 
       if ( $vQType == 2 ) {
-        $form['questions_fieldset']['answer'] = array(
-          '#type' => 'textfield',
+
+        $form['questions_fieldset']['answer_fieldset'] = array(
+          '#type' => 'fieldset',
           '#title' => t('Answer :'),
-          '#default_value' => isset($qsub->answer) ? $qsub->answer : '',
-          '#required' => TRUE,
+          '#prefix' => '<div id="answers-wrapper">',
+          '#suffix' => '</div>',
         );
+
+
+        $form['questions_fieldset']['answer_fieldset']['answers']['a1'] = array(
+          '#type' => 'textfield',
+          //'#title' => t('Answer :'),
+          '#default_value' => isset($qsub->answer) ? $qsub->answer : '',
+          //'#required' => TRUE,
+          //'#field_suffix' => l(t('X'), 'test'),
+        );
+
+        $lenAList = sizeof( $anwserList );
+        for ( $i = 0; $i < _eng_quiz_get_answer_num(); $i++ ) {
+          $va = 'a' . ( $i + 1 );
+          $dftAns = "";
+
+          if ( $i < $lenAList ) {
+            $dftAns = $anwserList[ $i ]->answer;
+          }
+          $form['questions_fieldset']['answer_fieldset']['answers'][$va] = array(
+            '#type' => 'textfield',
+            '#default_value' => $dftAns,
+          );
+
+
+        }
+
 
       } else if ( $vQType == 3 ) {
           if ( $isUpdate ) {
             $dftOptCnt = $qsub->opt_cnt;
-            $dftAns = $qsub->answer;
+            $dftAns = $anwserList[0]->answer;
           } else {
             $dftOptCnt = 4;
             $dftAns = 0;
@@ -235,28 +266,57 @@ function _eng_quiz_sub_list_form($form, &$form_state, $qmain = null, $qsub = nul
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => $isUpdate ? t('Update Question!') : t('Save Question!'),
-    '#weight' => 50,
+  //  '#weight' => 50,
+  );
+
+  $form['link_cancel'] = array(
+    '#markup' => t('!link',
+        array('!link' => l(t('Cancel'), 'eng_quiz/main'))
+      ),
   );
 
   return $form;
 }
 
 function _eng_quiz_ajax_add_question_callback($form, $form_state) {
-  $form['questions_fieldset']['box']['answerS']['#value'] = '';
+//  $form['questions_fieldset']['box']['answerS']['#value'] = '';
   return $form['questions_fieldset'];
 }
 
 function _eng_quiz_ajax_add_option_callback($form, $form_state) {
-  $form['questions_fieldset']['box']['answerO']['#value'] = 0;
+//  $form['questions_fieldset']['box']['answerO']['#value'] = 0;
   return $form['questions_fieldset']['box'];
 }
 
 function _eng_quiz_sub_list_form_validate($form, &$form_state) {
   //dpm( format_date(REQUEST_TIME, 'custom', 'Y-m-d' ) ) ;
+
   $v_qtype = $form_state['values']['question_type'];
 
   if ( $v_qtype == 1 ) {
     form_set_error('title', t('Select Question Type!!!'));
+  } else if ( $v_qtype == 2 ) {
+    // 주관식 답안 입력 여부 체크
+    if( isset( $form_state['values']['a1'] ) ) {
+
+      $numAns = _eng_quiz_get_answer_num();
+
+      $cnt = 0;
+      for( $i = 1; $i <= $numAns; $i++ ) {
+        $va = "a" . $i;
+        $txt = trim($form_state['values'][$va]);
+
+        if( !$txt ) {
+          $cnt++;
+        }
+      }
+
+      if ( $cnt === $numAns ) {
+        form_set_error( 'title', t('At least one Answer should be entered!') );
+      }
+
+    }
+
   }
 }
 
@@ -274,7 +334,6 @@ function _eng_quiz_sub_list_form_submit($form, &$form_state) {
 
   $entity->title  = $form_state['values']['question'];
   $entity->type  = $qtype;
-  $entity->answer  = $form_state['values']['answer'];
   $entity->mid  = $mid;
 
   if( $qtype == 3 ) {
@@ -300,6 +359,13 @@ function _eng_quiz_sub_list_form_submit($form, &$form_state) {
         drupal_write_record('eng_quiz_sub_opt', $ent_opt);
       }
 
+      // Answer
+      _eng_quiz_sub_answer_insert( $entity->id, 1,  $form_state['values']['answer'] );
+
+    } else if ( $qtype == 2 ) {
+      // 주관식 Answer
+      _eng_quiz_sub_sq_answer( $entity->id, $form_state );
+
     }
 
   } else {
@@ -316,6 +382,14 @@ function _eng_quiz_sub_list_form_submit($form, &$form_state) {
         drupal_write_record('eng_quiz_sub_opt', $opt, 'id');
       }
 
+      _eng_quiz_sub_answer_delete( $entity->id );
+      _eng_quiz_sub_answer_insert( $entity->id, 1,  $form_state['values']['answer'] );
+
+    } else if ( $qtype == 2 ) {
+      // 주관식 Answer
+      _eng_quiz_sub_answer_delete( $entity->id );
+      _eng_quiz_sub_sq_answer( $entity->id, $form_state );
+
     }
 
   }
@@ -323,4 +397,37 @@ function _eng_quiz_sub_list_form_submit($form, &$form_state) {
 
 
   $form_state['redirect'] = 'eng_quiz/sub/'.$mid;
+}
+
+// 주관식 답변
+function _eng_quiz_sub_sq_answer ( $sid, $form_state ) {
+  $numAns = _eng_quiz_get_answer_num();
+  $seq = 1;
+  for( $i = 1; $i <= $numAns; $i++ ) {
+    $va = "a" . $i;
+    $txt = trim($form_state['values'][$va]);
+
+    if( $txt ) {
+      _eng_quiz_sub_answer_insert( $sid, $seq, $txt );
+      $seq++;
+    }
+  }
+}
+
+function _eng_quiz_sub_answer_delete( $sid ){
+  db_delete('eng_quiz_sub_answer')
+    ->condition('sid', $sid)
+    ->execute();
+}
+
+function _eng_quiz_sub_answer_insert( $sid, $seq, $answer ) {
+
+
+  $ent_answer = entity_create('eng_quiz_sub_answer' , array() );
+
+  $ent_answer->sid = $sid;
+  $ent_answer->seq = $seq;
+  $ent_answer->answer = $answer;
+  $ent_answer->save();
+
 }

@@ -53,6 +53,17 @@ function eng_quiz_entity_info() {
     ),
   );
 
+	$info['eng_quiz_sub_answer'] = array(
+    'label' => t('Answers'),
+    'base table' => 'eng_quiz_sub_answer',
+    'entity class' => 'Entity',
+    'controller class' => 'EntityAPIController',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'answer',
+    ),
+  );
+
 	$info['eng_quiz_student_qlist'] = array(
     'label' => t('Student Quiz Info'),
     'base table' => 'eng_quiz_student_qlist',
@@ -276,4 +287,23 @@ function _eng_quiz_get_opt_list ( $sid ) {
   $opts = entity_load('eng_quiz_sub_opt', $tids);
 
   return $opts;
+}
+
+function _eng_quiz_get_answer_list ( $sid ) {
+
+	$list = array();
+
+  $result = db_query(
+      "SELECT * FROM {eng_quiz_sub_answer} WHERE sid =
+   :sid ORDER BY seq ASC", array(':sid' => $sid,)
+   );
+
+  $records = $result->fetchAll();
+
+  return $records;
+}
+
+// Return Number of Answers
+function _eng_quiz_get_answer_num() {
+	return 4;
 }

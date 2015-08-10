@@ -172,6 +172,46 @@ function eng_quiz_schema() {
 
   );
 
+	$schema['eng_quiz_sub_answer'] = array(
+    'description' => 'Quiz Answers',
+    'fields' => array(
+
+      'sid' => array(
+        'description' => 'The foreign identifier for question.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+
+			'seq' => array(
+        'description' => 'The sequence for answer.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+
+
+      'answer' => array(
+        'description' => 'The answer for question.',
+        'type' => 'varchar',
+        'length' => 500,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+
+    ),
+
+    'primary key' => array('sid', 'seq'),
+
+    'foreign keys' => array(
+      'fk_id' => array(
+        'table' => 'eng_quiz_sub',
+        'columns' => array('sid' => 'id'),
+      ),
+    ),
+
+  );
+
 	$schema['eng_quiz_student_qlist'] = array(
 		'description' => 'Student Quiz List',
 		'fields' => array(
@@ -251,7 +291,7 @@ function eng_quiz_schema() {
 			'answer' => array(
         'description' => 'The answer for this question.',
         'type' => 'varchar',
-        'length' => 300,
+        'length' => 500,
         'not null' => FALSE,
         'default' => '',
       ),
