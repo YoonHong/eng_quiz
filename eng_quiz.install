@@ -35,6 +35,15 @@ function eng_quiz_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+
+			'useYn' => array(
+				'description' => 'Check whether being used or not.',
+				'type' => 'varchar',
+				'length' => 10,
+				'not null' => TRUE,
+				'default' => 'Y',
+			),
+
       'created' => array(
         'description' => 'The Unix timestamp when the Quiz was created.',
         'type' => 'int',

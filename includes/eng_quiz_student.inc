@@ -181,6 +181,7 @@ function _eng_quiz_view_sq_list() {
 
   $query->fields('mq',array('id', 'title', 'type', 'created'))
         ->fields('sq',array('mid', 'uid'))
+        ->condition('mq.useYn', 'Y', '=')
         ->isNull('sq.mid');
 
   $result = $query->limit(20)

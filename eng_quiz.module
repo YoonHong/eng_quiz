@@ -108,19 +108,16 @@ function eng_quiz_menu() {
 
 	$items['eng_quiz/main'] = array(
 		'title' => 'Quiz Main',
-		'page callback' => '_eng_quiz_pc_main_list',
+		'page callback' => '_eng_quiz_pc_main_list_useY',
 		'access arguments' => array('administer Eng Quiz'),
-		'description' => 'Description Test Main',
+		'description' => 'Main Quiz',
 		'file' => 'includes/eng_quiz_main.inc',
 		'type' => MENU_NORMAL_ITEM,
 	);
 
 	$items['eng_quiz/main/list'] = array(
     'title' => 'List',
-    'page callback' => '_eng_quiz_pc_main_list',
-    'access arguments' => array('administer Eng Quiz'),
-		'description' => 'Description List',
-		'file' => 'includes/eng_quiz_main.inc',
+		'description' => 'Main Quiz List',
 		'type' => MENU_DEFAULT_LOCAL_TASK,
 		'weight' => 10,
   );
@@ -133,6 +130,25 @@ function eng_quiz_menu() {
     'type' => MENU_LOCAL_TASK,
 		'weight' => 20,
   );
+
+	$items['eng_quiz/main/list/useY'] = array(
+		'title' => 'Use : Y',
+		'description' => 'Used List',
+		'type' => MENU_DEFAULT_LOCAL_TASK,
+		'weight' => 30,
+	);
+
+
+	$items['eng_quiz/main/list/useN'] = array(
+		'title' => 'Use : N',
+		'page callback' => '_eng_quiz_pc_main_list_useN',
+		'access arguments' => array('administer Eng Quiz'),
+		'description' => 'Unused List',
+		'file' => 'includes/eng_quiz_main.inc',
+		'type' => MENU_LOCAL_TASK,
+		'weight' => 50,
+	);
+
 
 	$items['eng_quiz/main/%/del'] = array(
     'title' => 'Quiz Main List',

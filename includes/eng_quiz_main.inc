@@ -1,25 +1,35 @@
 <?php
 
-function _eng_quiz_pc_main_list() {
+function _eng_quiz_pc_main_list_useY( ) {
+
+  return _eng_quiz_pc_main_list( 'Y' );
+}
+
+function _eng_quiz_pc_main_list_useN( ) {
+
+  return _eng_quiz_pc_main_list( 'N' );
+}
+
+function _eng_quiz_pc_main_list( $yn ) {
 
   $content['preface']['#markup'] = t('Add Quiz !link.',
       array('!link' => l(t('here'), 'eng_quiz/main/add'))
     );
 
-  $content['table'] = _eng_quiz_pc_main_list_table();
+  $content['table'] = _eng_quiz_pc_main_list_table( $yn );
 
   return $content;
 }
 
-function _eng_quiz_pc_main_list_table(){
+function _eng_quiz_pc_main_list_table( $yn ){
   $content = array();
 
-
   $query = db_select('eng_quiz_main', 'd')->extend('PagerDefault');
-  $query->fields('d', array('id', 'type', 'title', 'created'));
+  $query->fields('d', array('id', 'type', 'title', 'created', 'useYn'));
 
-  // Change the number of rows with the limit() call.
+
   $result = $query
+    ->condition('d.useYn', $yn, '=')
     ->limit(20)
     ->orderBy('d.id', 'DESC')
     ->execute();
@@ -34,6 +44,7 @@ function _eng_quiz_pc_main_list_table(){
         'title' => l($entity->title, 'eng_quiz/sub/' . $entity->id ),
         'type' => $entity->type,
         'created' => format_date( $entity->created, 'custom', 'Y-M-d' ),
+        'used' => $entity->useYn,
         'edit' => l(t('edit'), 'eng_quiz/main/'.$entity->id.'/edit'),
         'del' => l(t('del'), 'eng_quiz/main/'.$entity->id.'/del'),
         ),
@@ -45,7 +56,7 @@ function _eng_quiz_pc_main_list_table(){
     $content['entity_table'] = array(
       '#theme' => 'table',
       '#rows' => $rows,
-      '#header' => array(t('ID'), t('Title'), t('Type'), t('Created Date'), t('Edit'), t('Del') ),
+      '#header' => array(t('ID'), t('Title'), t('Type'), t('Created Date'), t('Use'), t('Edit'), t('Del') ),
       '#empty' => t('No Quiz!!!'),
     );
 
@@ -68,7 +79,6 @@ function _eng_quiz_pc_main_add() {
 }
 
 function _eng_quiz_pc_main_edit( $id ) {
-dpm('edit');
   $entity = _eng_quiz_get_single_entity('eng_quiz_main', $id);
 	return drupal_get_form('_eng_quiz_main_add_form', $entity);
 }
@@ -99,10 +109,23 @@ function _eng_quiz_main_add_form($form, &$form_state, $eng_quiz_main = NULL) {
     '#required' => TRUE,
   );
 
+  if ( isset($eng_quiz_main->useYn) ) {
+    $form['useYn'] = array(
+      '#title' => t('Use : Yes or No?'),
+      '#type' => 'select',
+      '#options' => array( 'Y' => 'Yes', 'N' => 'No', ),
+      '#default_value' => $eng_quiz_main->useYn,
+
+    );
+  }
+
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => isset($eng_quiz_main->id) ? t('Update English Quiz Main') : t('Save English Quiz Main'),
-    '#weight' => 100,
+    '#value' => isset($eng_quiz_main->id) ? t('Update') : t('Save'),
+  );
+
+  $form['link_cancel'] = array(
+    '#markup' => t( '<a href="javascript:window.history.go(-1);">back</a>' ),
   );
 
   return $form;
@@ -126,13 +149,17 @@ function _eng_quiz_main_add_form_submit($form, &$form_state) {
 
   $entity->title  = $form_state['values']['title'];
   $entity->type  = $form_state['values']['type'];
-  $entity->created  = REQUEST_TIME;
 
   if( $org_entity->id == null ) {
   	// Insert
-  	drupal_write_record('eng_quiz_main', $entity);
+    $entity->created  = REQUEST_TIME;
+
+    drupal_write_record('eng_quiz_main', $entity);
   } else {
     // Edit
+    $entity->useYn  = $form_state['values']['useYn'];
+    $entity->changed  = REQUEST_TIME;
+
   	drupal_write_record('eng_quiz_main', $entity, 'id');
   }
 
