@@ -119,6 +119,7 @@ function _eng_quiz_view_sq_history() {
   $query = db_select('eng_quiz_student_qlist', 'sq')->extend('PagerDefault');
   $query->join('eng_quiz_main', 'mq', 'mq.id = sq.mid');
   $query->condition('sq.uid', $uid, '=');
+  $query->condition('sq.retest', 'N', '=');
   $query->fields('mq',array('title', 'type'))
         ->fields('sq',array('id', 'mid', 'uid', 'cnt', 'created'));
   $query->limit(20)
@@ -177,7 +178,7 @@ function _eng_quiz_view_sq_list() {
 
   $query = db_select('eng_quiz_main', 'mq')->extend('PagerDefault');
 
-  $query->leftJoin('eng_quiz_student_qlist', 'sq', 'mq.id = sq.mid AND sq.uid = '.$uid);
+  $query->leftJoin('eng_quiz_student_qlist', 'sq', "mq.id = sq.mid AND sq.retest = 'N' AND sq.uid = ".$uid);
 
   $query->fields('mq',array('id', 'title', 'type', 'created'))
         ->fields('sq',array('mid', 'uid'))

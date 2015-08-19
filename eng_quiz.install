@@ -252,6 +252,14 @@ function eng_quiz_schema() {
 				'not null' => TRUE,
 			),
 
+			'retest' => array(
+				'description' => 'ReTest YN',
+				'type' => 'varchar',
+				'length' => 10,
+				'not null' => TRUE,
+				'default' => 'N',
+			),
+
 			'created' => array(
 				'description' => 'Time when student solved a quiz!',
 				'type' => 'int',
