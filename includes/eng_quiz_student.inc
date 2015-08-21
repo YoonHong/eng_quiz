@@ -262,6 +262,7 @@ function _eng_quiz_student_qprocess_form($form, &$form_state, $mid) {
       $form['A'.$idx] = array(
         '#type' => 'textfield',
         '#required' => TRUE,
+        '#size' => 130,
       );
 
     } else if ( $sub->type == 3 ) {
