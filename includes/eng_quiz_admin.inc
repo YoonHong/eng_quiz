@@ -40,7 +40,12 @@ function _eng_quiz_admin_ql_table() {
           )->fetchField();
 
       $profile=profile2_load_by_user($entity->uid,'main');
-      $rName = count($profile->field_full_name) > 0 ? $profile->field_full_name['und'][0]['value'] : '';
+
+      if ( isset($profile->field_full_name) && count($profile->field_full_name) > 0 ) {
+        $rName = $profile->field_full_name['und'][0]['value'];
+      } else {
+        $rName = '';
+      }
 
       // Create tabular rows for our entities.
       $rows[] = array(
