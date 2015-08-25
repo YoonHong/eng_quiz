@@ -4,12 +4,30 @@ function _eng_quiz_pc_admin_quiz_list() {
 
 //  $content['preface']['#markup'] = t( 'Student Quiz List' );
 
-  $content['table'] = _eng_quiz_admin_ql_table();
+  $content['table'] = _eng_quiz_admin_ql_table( 'latest' );
 
   return $content;
 }
 
-function _eng_quiz_admin_ql_table() {
+function _eng_quiz_pc_admin_list_by_quiz() {
+  $content['table'] = _eng_quiz_admin_aList_byQuiz_table( );
+
+  return $content;
+}
+
+function _eng_quiz_pc_admin_list_by_quiz_sub( $id ) {
+  $content['table'] = _eng_quiz_admin_ql_table( 'byquiz', $id );
+
+  $content['link_back'] = array(
+    '#markup' => l('back', 'eng_quiz/admin/quiz'),
+    '#prefix' => '<div style="margin-top:20px;">',
+    '#suffix' => '</div>',
+  );
+
+  return $content;
+}
+
+function _eng_quiz_admin_ql_table( $type, $tid = '' ) {
   $content = array();
 
   $user = $GLOBALS['user'];
@@ -23,6 +41,11 @@ function _eng_quiz_admin_ql_table() {
         ->fields('user',array('name'))
         ->fields('sq',array('id', 'mid', 'uid', 'cnt', 'created'))
         ->condition('sq.retest', 'N', '=');
+
+  if ( $type == 'byquiz' ) {
+    $query->condition('mq.id', $tid, '=');
+  }
+
   $query->limit(20)
         ->orderBy('sq.created', 'DESC');
 
@@ -55,8 +78,8 @@ function _eng_quiz_admin_ql_table() {
           'title' => l($entity->title, 'eng_quiz/student/'.$entity->id.'/qanswer/'.$uid),
           'cnt' => ''.$entity->cnt.' / '.$total_cnt,
           'created' => format_date( $entity->created, 'custom', 'Y-M-d' ),
-          'retest' => l(t('ReTest'), 'eng_quiz/admin/'.$entity->id.'/latest/retest'),
-          'del' => l(t('x'), 'eng_quiz/admin/'.$entity->id.'/latest/del'),
+          'retest' => l(t('ReTest'), 'eng_quiz/admin/'.$entity->id.'/'.$type.'/retest/'.$entity->mid),
+          'del' => l(t('x'), 'eng_quiz/admin/'.$entity->id.'/'.$type.'/del/'.$entity->mid),
         ),
       );
     }
@@ -74,7 +97,7 @@ function _eng_quiz_admin_ql_table() {
     // There were no entities. Tell the user.
     $content[] = array(
       '#type' => 'item',
-      '#markup' => t('No History!!!'),
+      '#markup' => t('No Item!!!'),
     );
   }
 
@@ -82,27 +105,122 @@ function _eng_quiz_admin_ql_table() {
 
 }
 
-function _eng_quiz_pc_admin_latest_del( $id ) {
-  return drupal_get_form('_eng_quiz_pc_admin_latest_del_form', $id);
+function _eng_quiz_admin_aList_byQuiz_table( ){
+  $content = array();
+
+  $query = db_select('eng_quiz_main', 'd')->extend('PagerDefault');
+  $query->fields('d', array('id', 'type', 'title', 'created', 'useYn'));
+
+
+  $result = $query
+    //->condition('d.useYn', $yn, '=')
+    ->limit(20)
+    ->orderBy('d.id', 'DESC')
+    ->execute();
+
+  if ($result->rowCount() > 0 ) {
+    $rows = array();
+    foreach ($result as $entity) {
+      // Create tabular rows for our entities.
+
+      $rcnt_query = db_query(
+          "SELECT COUNT(*) rcnt FROM {eng_quiz_student_qlist} WHERE mid = :mid AND retest = 'N' ", array(':mid' => $entity->id,)
+       );
+      $result = $rcnt_query->fetchObject();
+      $rcnt = '';
+      if( $result->rcnt > 0 ) {
+        $rcnt = l( $result->rcnt.' ( View List )' , 'eng_quiz/admin/quiz/'.$entity->id );
+      } else {
+        $rcnt = '0';
+      }
+
+      $rows[] = array(
+        'data' => array(
+        'id' => $entity->id,
+        'title' => $entity->title,
+        'type' => $entity->type,
+        'rcnt' => $rcnt,
+        'created' => format_date( $entity->created, 'custom', 'Y-M-d' ),
+        'used' => $entity->useYn,
+        ),
+      );
+
+    }
+
+    // Put our entities into a themed table. See theme_table() for details.
+    $content['entity_table'] = array(
+      '#theme' => 'table',
+      '#rows' => $rows,
+      '#header' => array(t('ID'), t('Title'), t('Type'), t('Result Count'), t('Created Date'), t('Use'), ),
+      '#empty' => t('No Quiz!!!'),
+    );
+
+    // Attach the pager theme.
+    $content['entity_pager'] = array('#theme' => 'pager');
+
+  } else {
+    $content[] = array(
+      '#type' => 'item',
+      '#markup' => t('No Quiz!!!'),
+    );
+  }
+
+  return $content;
 }
 
-function _eng_quiz_pc_admin_latest_del_form($form, &$form_state, $id) {
+
+function _eng_quiz_pc_admin_latest_del( $id, $mid ) {
+  return drupal_get_form('_eng_quiz_pc_admin_quiz_del_form', $id, 'latest', $mid );
+}
+
+function _eng_quiz_pc_admin_byquiz_del( $id, $mid ) {
+  return drupal_get_form('_eng_quiz_pc_admin_quiz_del_form', $id, 'byquiz', $mid );
+}
+
+function _eng_quiz_pc_admin_quiz_del_form($form, &$form_state, $id, $type, $mid) {
   $form['delid'] = array(
     '#type' => 'value',
     '#value' => $id,
   );
 
-  $question = t( "Do you want to delete this Quiz Result?" );
-  $path = 'eng_quiz/admin/latest';
-  $description = t( "This cannot be undone." );
-  $yes = t( "Confirm" );
-  $no = t( "Cancel" );
-  return confirm_form( $form, $question, $path, $description, $yes, $no );
+  $form['mid'] = array(
+    '#type' => 'value',
+    '#value' => $mid,
+  );
+
+  $form['rtype'] = array(
+    '#type' => 'value',
+    '#value' => $type,
+  );
+
+  $form['question'] = array(
+      '#markup' => t( "Do you want to delete this Quiz Result?" ),
+      '#prefix' => '<h1 class=title>',
+      '#suffix' => '</h1>',
+    );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Confirm'),
+  );
+
+  $form['link_cancel'] = array(
+    '#markup' => t( '<a href="javascript:window.history.go(-1);">Cancel</a>' ),
+  );
+
+  return $form;
 }
 
 
-function _eng_quiz_pc_admin_latest_del_form_submit($form, &$form_state) {
+function _eng_quiz_pc_admin_quiz_del_form_submit($form, &$form_state) {
   $did = $form_state['values']['delid'];
+  $rtype = $form_state['values']['rtype'];
+  $mid = $form_state['values']['mid'];
+  $redirect = 'eng_quiz/admin/latest';
+
+  if( $rtype == 'byquiz' ) {
+    $redirect = 'eng_quiz/admin/quiz/'.$mid;
+  }
 
   db_delete('eng_quiz_student_qlist')
     ->condition('id', $did)
@@ -111,30 +229,60 @@ function _eng_quiz_pc_admin_latest_del_form_submit($form, &$form_state) {
   $msg = t( "The Quiz Result has been deleted." );
   drupal_set_message( $msg );
 
-  $form_state['redirect'] = 'eng_quiz/admin/latest';
+  $form_state['redirect'] = $redirect;
 }
 
-function _eng_quiz_pc_admin_latest_retest( $id ) {
-  return drupal_get_form('_eng_quiz_pc_admin_latest_retest_form', $id);
+function _eng_quiz_pc_admin_latest_retest( $id, $mid ) {
+  return drupal_get_form('_eng_quiz_pc_admin_retest_form', $id, 'latest', $mid);
 }
 
-function _eng_quiz_pc_admin_latest_retest_form($form, &$form_state, $id) {
+function _eng_quiz_pc_admin_byquiz_retest( $id, $mid ) {
+  return drupal_get_form('_eng_quiz_pc_admin_retest_form', $id, 'byquiz', $mid);
+}
+
+function _eng_quiz_pc_admin_retest_form($form, &$form_state, $id, $type, $mid) {
   $form['rid'] = array(
     '#type' => 'value',
     '#value' => $id,
   );
 
-  $question = t( "Do you want to make this Quiz ReTested?" );
-  $path = 'eng_quiz/admin/latest';
-  $description = t( "This cannot be undone." );
-  $yes = t( "Confirm" );
-  $no = t( "Cancel" );
-  return confirm_form( $form, $question, $path, $description, $yes, $no );
+  $form['rtype'] = array(
+    '#type' => 'value',
+    '#value' => $type,
+  );
+
+  $form['mid'] = array(
+    '#type' => 'value',
+    '#value' => $mid,
+  );
+
+  $form['question'] = array(
+      '#markup' => t( "Do you want to make this Quiz ReTested?" ),
+      '#prefix' => '<h1 class=title>',
+      '#suffix' => '</h1>',
+    );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Confirm'),
+  );
+
+  $form['link_cancel'] = array(
+    '#markup' => t( '<a href="javascript:window.history.go(-1);">Cancel</a>' ),
+  );
+
+  return $form;
 }
 
-
-function _eng_quiz_pc_admin_latest_retest_form_submit($form, &$form_state) {
+function _eng_quiz_pc_admin_retest_form_submit($form, &$form_state) {
   $rid = $form_state['values']['rid'];
+  $rtype = $form_state['values']['rtype'];
+  $mid = $form_state['values']['mid'];
+  $redirect = 'eng_quiz/admin/latest';
+
+  if( $rtype == 'byquiz' ) {
+    $redirect = 'eng_quiz/admin/quiz/'.$mid;
+  }
 
   db_update('eng_quiz_student_qlist')
     ->fields(array(
@@ -146,5 +294,5 @@ function _eng_quiz_pc_admin_latest_retest_form_submit($form, &$form_state) {
   $msg = t( "Completed!" );
   drupal_set_message( $msg );
 
-  $form_state['redirect'] = 'eng_quiz/admin/latest';
+  $form_state['redirect'] = $redirect;
 }

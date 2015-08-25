@@ -260,7 +260,7 @@ function eng_quiz_menu() {
 
 	$items['eng_quiz/admin/quiz'] = array(
 		'title' => 'by Quiz',
-		'page callback' => '_eng_quiz_pc_admin_quiz_list',
+		'page callback' => '_eng_quiz_pc_admin_list_by_quiz',
 		'description' => "Admin Quiz",
 		'access arguments' => array('administer Eng Quiz'),
 		'file' => 'includes/eng_quiz_admin.inc',
@@ -268,19 +268,45 @@ function eng_quiz_menu() {
 		'weight' => 20,
 	);
 
-	$items['eng_quiz/admin/%/latest/del'] = array(
-    'title' => 'Delete Quiz Result',
+	$items['eng_quiz/admin/%/latest/del/%'] = array(
     'page callback' => '_eng_quiz_pc_admin_latest_del',
-    'page arguments' => array(2),
+    'page arguments' => array(2,5),
 		'access arguments' => array('administer Eng Quiz'),
 		'file' => 'includes/eng_quiz_admin.inc',
 		'type' => MENU_CALLBACK,
   );
 
-	$items['eng_quiz/admin/%/latest/retest'] = array(
-    'title' => 'ReTest',
+	$items['eng_quiz/admin/%/latest/retest/%'] = array(
+  //  'title' => 'ReTest',
     'page callback' => '_eng_quiz_pc_admin_latest_retest',
-    'page arguments' => array(2),
+    'page arguments' => array(2,5),
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_admin.inc',
+		'type' => MENU_CALLBACK,
+  );
+
+	$items['eng_quiz/admin/quiz/%'] = array(
+		'title' => 'by Quiz',
+		'page callback' => '_eng_quiz_pc_admin_list_by_quiz_sub',
+		'description' => "Admin Quiz",
+		'page arguments' => array(3),
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_admin.inc',
+		'type' => MENU_CALLBACK,
+		'weight' => 20,
+	);
+
+	$items['eng_quiz/admin/%/byquiz/del/%'] = array(
+    'page callback' => '_eng_quiz_pc_admin_byquiz_del',
+    'page arguments' => array(2,5),
+		'access arguments' => array('administer Eng Quiz'),
+		'file' => 'includes/eng_quiz_admin.inc',
+		'type' => MENU_CALLBACK,
+  );
+
+	$items['eng_quiz/admin/%/byquiz/retest/%'] = array(
+    'page callback' => '_eng_quiz_pc_admin_byquiz_retest',
+    'page arguments' => array(2,5),
 		'access arguments' => array('administer Eng Quiz'),
 		'file' => 'includes/eng_quiz_admin.inc',
 		'type' => MENU_CALLBACK,
