@@ -8,6 +8,13 @@ function eng_quiz_install() {
 }
 
 /**
+ * Implements hook_enable().
+ */
+function eng_quiz_enable() {
+
+}
+
+/**
  * Implements hook_schema().
  */
 function eng_quiz_schema() {

@@ -15,11 +15,30 @@ function _eng_quiz_pc_admin_list_by_quiz() {
   return $content;
 }
 
+function _eng_quiz_pc_admin_list_by_student() {
+
+  $content['table'] = _eng_quiz_admin_aList_byStudent_table( );
+
+  return $content;
+}
+
 function _eng_quiz_pc_admin_list_by_quiz_sub( $id ) {
   $content['table'] = _eng_quiz_admin_ql_table( 'byquiz', $id );
 
   $content['link_back'] = array(
     '#markup' => l('back', 'eng_quiz/admin/quiz'),
+    '#prefix' => '<div style="margin-top:20px;">',
+    '#suffix' => '</div>',
+  );
+
+  return $content;
+}
+
+function _eng_quiz_pc_admin_list_by_student_sub( $id ) {
+  $content['table'] = _eng_quiz_admin_ql_table( 'bystudent', $id );
+
+  $content['link_back'] = array(
+    '#markup' => l('back', 'eng_quiz/admin/student'),
     '#prefix' => '<div style="margin-top:20px;">',
     '#suffix' => '</div>',
   );
@@ -44,6 +63,8 @@ function _eng_quiz_admin_ql_table( $type, $tid = '' ) {
 
   if ( $type == 'byquiz' ) {
     $query->condition('mq.id', $tid, '=');
+  } else if ( $type == 'bystudent' ) {
+    $query->condition('user.uid', $tid, '=');
   }
 
   $query->limit(20)
@@ -70,6 +91,13 @@ function _eng_quiz_admin_ql_table( $type, $tid = '' ) {
         $rName = '';
       }
 
+
+      if ( $type == "bystudent" ) {
+        $optId = $tid;
+      } else {
+        $optId = $entity->mid;
+      }
+
       // Create tabular rows for our entities.
       $rows[] = array(
         'data' => array(
@@ -78,8 +106,8 @@ function _eng_quiz_admin_ql_table( $type, $tid = '' ) {
           'title' => l($entity->title, 'eng_quiz/student/'.$entity->id.'/qanswer/'.$uid),
           'cnt' => ''.$entity->cnt.' / '.$total_cnt,
           'created' => format_date( $entity->created, 'custom', 'Y-M-d' ),
-          'retest' => l(t('ReTest'), 'eng_quiz/admin/'.$entity->id.'/'.$type.'/retest/'.$entity->mid),
-          'del' => l(t('x'), 'eng_quiz/admin/'.$entity->id.'/'.$type.'/del/'.$entity->mid),
+          'retest' => l(t('ReTest'), 'eng_quiz/admin/'.$entity->id.'/'.$type.'/retest/'.$optId),
+          'del' => l(t('x'), 'eng_quiz/admin/'.$entity->id.'/'.$type.'/del/'.$optId),
         ),
       );
     }
@@ -168,6 +196,70 @@ function _eng_quiz_admin_aList_byQuiz_table( ){
   return $content;
 }
 
+function _eng_quiz_admin_aList_byStudent_table( ){
+  $content = array();
+
+  $query = db_select('users', 'u')->extend('PagerDefault');
+  $query->leftJoin('users_roles', 'r', 'u.uid = r.uid');
+  $query->fields('u', array('uid', 'name', 'mail', 'created', 'status'));
+  $query->fields('r', array('rid',));
+
+
+  $result = $query
+    ->condition('u.status', 1, '=')
+    ->isNull('r.rid')
+    ->limit(20)
+    ->execute();
+
+  if ($result->rowCount() > 0 ) {
+    $rows = array();
+    foreach ($result as $entity) {
+      // Create tabular rows for our entities.
+
+      $rcnt = 0;
+
+      $rcnt_query = db_query(
+          "SELECT COUNT(*) rcnt FROM {eng_quiz_student_qlist} WHERE uid = :uid AND retest = 'N' ", array(':uid' => $entity->uid,)
+       );
+      $result = $rcnt_query->fetchObject();
+
+      if( $result->rcnt > 0 ) {
+        $rcnt = l( $result->rcnt.' ( View List )' , 'eng_quiz/admin/student/'.$entity->uid );
+      } else {
+        $rcnt = '0';
+      }
+
+
+      $rows[] = array(
+        'data' => array(
+        'uid' => $entity->name,
+        'name' => _eng_quiz_get_user_name($entity->uid),
+        'rid' => $rcnt,
+        ),
+      );
+
+    }
+
+    // Put our entities into a themed table. See theme_table() for details.
+    $content['entity_table'] = array(
+      '#theme' => 'table',
+      '#rows' => $rows,
+      '#header' => array(t('User ID'), t('User Name'), t('Result Count'), ),
+    );
+
+    // Attach the pager theme.
+    $content['entity_pager'] = array('#theme' => 'pager');
+
+  } else {
+    $content[] = array(
+      '#type' => 'item',
+      '#markup' => t('No Quiz!!!'),
+    );
+  }
+
+
+  return $content;
+}
 
 function _eng_quiz_pc_admin_latest_del( $id, $mid ) {
   return drupal_get_form('_eng_quiz_pc_admin_quiz_del_form', $id, 'latest', $mid );
@@ -175,6 +267,10 @@ function _eng_quiz_pc_admin_latest_del( $id, $mid ) {
 
 function _eng_quiz_pc_admin_byquiz_del( $id, $mid ) {
   return drupal_get_form('_eng_quiz_pc_admin_quiz_del_form', $id, 'byquiz', $mid );
+}
+
+function _eng_quiz_pc_admin_bystudent_del( $id, $mid ) {
+  return drupal_get_form('_eng_quiz_pc_admin_quiz_del_form', $id, 'bystudent', $mid );
 }
 
 function _eng_quiz_pc_admin_quiz_del_form($form, &$form_state, $id, $type, $mid) {
@@ -220,6 +316,8 @@ function _eng_quiz_pc_admin_quiz_del_form_submit($form, &$form_state) {
 
   if( $rtype == 'byquiz' ) {
     $redirect = 'eng_quiz/admin/quiz/'.$mid;
+  } else if( $rtype == 'bystudent' ) {
+    $redirect = 'eng_quiz/admin/student/'.$mid;
   }
 
   db_delete('eng_quiz_student_qlist')
@@ -238,6 +336,10 @@ function _eng_quiz_pc_admin_latest_retest( $id, $mid ) {
 
 function _eng_quiz_pc_admin_byquiz_retest( $id, $mid ) {
   return drupal_get_form('_eng_quiz_pc_admin_retest_form', $id, 'byquiz', $mid);
+}
+
+function _eng_quiz_pc_admin_bystudent_retest( $id, $mid ) {
+  return drupal_get_form('_eng_quiz_pc_admin_retest_form', $id, 'bystudent', $mid);
 }
 
 function _eng_quiz_pc_admin_retest_form($form, &$form_state, $id, $type, $mid) {
@@ -282,6 +384,8 @@ function _eng_quiz_pc_admin_retest_form_submit($form, &$form_state) {
 
   if( $rtype == 'byquiz' ) {
     $redirect = 'eng_quiz/admin/quiz/'.$mid;
+  } else if( $rtype == 'bystudent' ) {
+    $redirect = 'eng_quiz/admin/student/'.$mid;
   }
 
   db_update('eng_quiz_student_qlist')
