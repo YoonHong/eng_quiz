@@ -9,6 +9,7 @@ function _eng_quiz_pc_student_quiz() {
 }
 
 function _eng_quiz_pc_student_qprocess( $mid ) {
+  drupal_add_css('.form-item .option {font-size: 16px;}', array('type' => 'inline'));
   return drupal_get_form('_eng_quiz_student_qprocess_form', $mid);
 }
 
@@ -226,6 +227,7 @@ function _eng_quiz_view_sq_list() {
 }
 
 function _eng_quiz_student_qprocess_form($form, &$form_state, $mid) {
+  $qmain = _eng_quiz_get_single_entity( 'eng_quiz_main' , $mid );
 
   $form['v_mid'] = array(
     '#type' => 'value',
@@ -240,7 +242,9 @@ function _eng_quiz_student_qprocess_form($form, &$form_state, $mid) {
             <br/>Type : @type</p>
 
           '
-        , array('@title' => 't1', '@type' => 't2', )),
+        , array('@title' => $qmain->title, '@type' => $qmain->type, )),
+    '#prefix' => '<div style="font-size:20px;">',
+    '#suffix' => '</div>',
   );
 
 
@@ -250,10 +254,17 @@ function _eng_quiz_student_qprocess_form($form, &$form_state, $mid) {
   foreach ($slist as $sub) {
     $idx++;
 
-    $form['subList'.$idx] = array(
+    $form['subListNo'.$idx] = array(
       '#type' => 'markup',
-      '#markup' => t( 'Q @qNum : <pre>@qTitle</pre>', array( '@qNum' => $idx, '@qTitle' => $sub->title, ) ),
-      '#prefix' => '<div style="padding-top:10px;">',
+      '#markup' => 'Q '.$idx.' :',
+      '#prefix' => '<div style="font-size:16px; margin-top:35px;">',
+      '#suffix' => '</div>',
+    );
+
+    $form['subListQ'.$idx] = array(
+      '#type' => 'markup',
+      '#markup' => nl2br($sub->title),
+      '#prefix' => '<div style="background-color: #f2f2f2; font-size:16px; padding:10px 10px 10px 10px;">',
       '#suffix' => '</div>',
     );
 
@@ -274,6 +285,9 @@ function _eng_quiz_student_qprocess_form($form, &$form_state, $mid) {
         '#type' => 'radios',
         '#required' => TRUE,
         '#options' => $active,
+
+        '#prefix' => '<div style="font-size:16px;">',
+        '#suffix' => '</div>',
       );
 
     }
@@ -301,7 +315,7 @@ function _eng_quiz_get_opt_questions( $sid ){
   $idx = 0;
   foreach($opts as $opt) {
     $idx++;
-    $active[$idx] = $opt->title;
+    $active[$idx] = nl2br($opt->title);
   }
 
   return $active;

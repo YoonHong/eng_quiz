@@ -243,7 +243,7 @@ function _eng_quiz_sub_list_form($form, &$form_state, $qmain = null, $qsub = nul
 
               foreach($opts as $opt) {
                 $form['questions_fieldset']['box']['opt'.$opt->seq] = array(
-                  '#type' => 'textfield',
+                  '#type' => 'textarea',
                   '#title' => t('Option @num', array('@num'=>$opt->seq,)),
                   '#default_value' => $opt->title,
                 );
@@ -254,7 +254,7 @@ function _eng_quiz_sub_list_form($form, &$form_state, $qmain = null, $qsub = nul
 
               for ($i = 1; $i <= $optCnt; $i++) {
                 $form['questions_fieldset']['box']['opt'.$i] = array(
-                  '#type' => 'textfield',
+                  '#type' => 'textarea',
                   '#title' => t('Option @num', array('@num'=>$i,)),
                 );
               }
