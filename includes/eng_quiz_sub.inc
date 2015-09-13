@@ -16,19 +16,62 @@ function _eng_quiz_pc_sub_edit($mid, $sid) {
 
 function _eng_quiz_pc_sub_del($mid, $sid) {
 
-	db_delete('eng_quiz_sub')
-		->condition('id', $sid)
-		->execute();
+  return drupal_get_form('_eng_quiz_pc_sub_del_from', $mid, $sid );
+}
+
+
+function _eng_quiz_pc_sub_del_from($form, &$form_state, $mid, $sid) {
+  $form['mid'] = array(
+    '#type' => 'value',
+    '#value' => $mid,
+  );
+
+  $form['sid'] = array(
+    '#type' => 'value',
+    '#value' => $sid,
+  );
+
+  $form['question'] = array(
+      '#markup' => t( "Do you want to delete this Questin?" ),
+      '#prefix' => '<h1 class=title>',
+      '#suffix' => '</h1>',
+    );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Confirm'),
+  );
+
+  $form['link_cancel'] = array(
+    '#markup' => t( '<a href="javascript:window.history.go(-1);">Cancel</a>' ),
+  );
+
+  return $form;
+}
+
+
+function _eng_quiz_pc_sub_del_from_submit($form, &$form_state) {
+  $sid = $form_state['values']['sid'];
+  $mid = $form_state['values']['mid'];
+  $redirect = 'eng_quiz/sub/'.$mid;
+
+  db_delete('eng_quiz_sub')
+    ->condition('id', $sid)
+    ->execute();
 
   db_delete('eng_quiz_sub_opt')
-		->condition('sid', $sid)
-		->execute();
+    ->condition('sid', $sid)
+    ->execute();
 
   _eng_quiz_sub_answer_delete( $sid );
 
-	return _eng_quiz_pc_sub_list($mid);
+  $msg = t( "The Question has been deleted." );
+  drupal_set_message( $msg );
 
+
+  $form_state['redirect'] = $redirect;
 }
+
 
 function _eng_quiz_sub_list_form($form, &$form_state, $qmain = null, $qsub = null) {
 
